@@ -1,0 +1,9 @@
+# GET /messages
+curl --request GET localhost:8080/messages
+
+# GET /message/:id
+curl --request GET localhost:8080/message/1
+curl --request GET localhost:8080/message/3
+
+# POST /message
+curl --include --header "Content-Type: application/json" -d @body.json --request POST localhost:8080/message
