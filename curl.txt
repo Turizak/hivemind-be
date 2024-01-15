@@ -1,0 +1,30 @@
+# GET /messages
+curl --request GET localhost:8080/messages
+
+# GET /message/:id
+curl --request GET localhost:8080/message/1
+curl --request GET localhost:8080/message/3
+
+# POST /message
+curl --include --header "Content-Type: application/json" -d @post.json --request POST localhost:8080/message
+
+# PATCH /message/add-upvote?id
+curl -s -X PATCH 'localhost:8080/message/add-upvote?id=1'
+
+# PATCH /message/add-downvote?id
+curl -s -X PATCH 'localhost:8080/message/add-downvote?id=1'
+
+# PATCH /message/remove-upvote?id
+curl -s -X PATCH 'localhost:8080/message/remove-upvote?id=1'
+
+# PATCH /message/remove-downvote?id
+curl -s -X PATCH 'localhost:8080/message/remove-downvote?id=1'
+
+# PATCH /message/delete?id
+curl -s -X PATCH 'localhost:8080/message/delete?id=1'
+
+# PATCH /message/undelete?id
+curl -s -X PATCH 'localhost:8080/message/undelete?id=1'
+
+# PATCH /message/update?id
+curl -s -X PATCH --include --header "Content-Type: application/json" -d @patch.json 'localhost:8080/message/update?id=1'
