@@ -2,26 +2,29 @@ package messages
 
 import (
 	"example/hivemind-be/db"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 //GORM uses the name of your type as the DB table to query. Here the type is Message so gorm will use the messages table by default.
 type Message struct {
-	ID           int32  `json:"id" gorm:"primaryKey:type:int32"`
-	Category     string `json:"category"`
-	Title        string `json:"title"`
-	Author       string `json:"author"`
-	Message      string `json:"message"`
-	UUID         string `json:"uuid"`
-	Created      string `json:"created"`
-	Type         string `json:"type"`
-	Upvote       int32  `json:"upvote"`
-	Downvote     int32  `json:"downvote"`
-	CommentCount int32  `json:"commentCount"`
-	Deleted      bool   `json:"deleted"`
+	ID           int32       `json:"Id" gorm:"primaryKey:type:int32"`
+	Category     string      `json:"Category"`
+	Title        string      `json:"Title"`
+	Author       string      `json:"Author"`
+	Message      string      `json:"Message"`
+	UUID         string      `json:"Uuid"`
+	Created      pq.NullTime `json:"Created"`
+	LastEdited   pq.NullTime `json:"LastEdited"`
+	Type         string      `json:"Type"`
+	Upvote       int32       `json:"Upvote"`
+	Downvote     int32       `json:"Downvote"`
+	CommentCount int32       `json:"CommentCount"`
+	Deleted      bool        `json:"Deleted"`
 }
 
 func GetMessages(c *gin.Context) {
@@ -55,12 +58,13 @@ func CreateMessage(c *gin.Context) {
 	}
 
 	newMsg.UUID = uuid.NewString()
-	newMsg.Created = time.Now().Format(time.RFC3339Nano)
+	newMsg.Created = pq.NullTime{Time: time.Now(), Valid: true}
 	newMsg.Type = "message"
 	newMsg.Upvote = 0
 	newMsg.Downvote = 0
 	newMsg.CommentCount = 0
 	newMsg.Deleted = false
+	newMsg.LastEdited = pq.NullTime{Valid: false}
 
 	if result := db.Db.Create(&newMsg); result.Error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{
@@ -183,6 +187,7 @@ func DeleteMessage(c *gin.Context) {
 	}
 
 	messages.Deleted = true
+	messages.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&messages)
 	c.IndentedJSON(http.StatusOK, messages)
 }
@@ -208,6 +213,7 @@ func UndeleteMessage(c *gin.Context) {
 	}
 
 	messages.Deleted = false
+	messages.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&messages)
 	c.IndentedJSON(http.StatusOK, messages)
 }
@@ -242,6 +248,8 @@ func UpdateMessage(c *gin.Context) {
 	if val, ok := jsonDataHasKey(updateMsg, "message"); ok {
 		messages.Message = val
 	}
+
+	messages.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 
 	db.Db.Save(&messages)
 	c.IndentedJSON(http.StatusOK, messages)
