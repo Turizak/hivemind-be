@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS messages
     comment_count integer,
     deleted boolean,
     uuid character varying NOT NULL,
-    created timestamp with time zone NOT NULL
+    created timestamp with time zone NOT NULL,
+    last_edited timestamp with time zone
 );
