@@ -1,19 +1,20 @@
 package routes
 
 import (
-	"example/hivemind-be/messages"
+	"example/hivemind-be/content"
 	"github.com/gin-gonic/gin"
 )
 
 func Routes(router *gin.Engine) {
-	router.GET("/messages", messages.GetMessages)
-	router.GET("/message/:id", messages.GetMessageById)
-	router.POST("/message", messages.CreateMessage)
-	router.PATCH("message/add-upvote", messages.AddMessageUpvote)
-	router.PATCH("message/remove-upvote", messages.RemoveMessageUpvote)
-	router.PATCH("message/add-downvote", messages.AddMessageDownvote)
-	router.PATCH("message/remove-downvote", messages.RemoveMessageDownvote)
-	router.PATCH("message/delete", messages.DeleteMessage)
-	router.PATCH("message/undelete", messages.UndeleteMessage)
-	router.PATCH("message/update", messages.UpdateMessage)
+	router.GET("/content", content.GetContent)
+	router.GET("/content/id/:id", content.GetContentById)
+	router.GET("/content/uuid/:uuid", content.GetContentByUuid)
+	router.POST("/content", content.CreateContent)
+	router.PATCH("content/add-upvote", content.AddContentUpvote)
+	router.PATCH("content/remove-upvote", content.RemoveContentUpvote)
+	router.PATCH("content/add-downvote", content.AddContentDownvote)
+	router.PATCH("content/remove-downvote", content.RemoveContentDownvote)
+	router.PATCH("content/delete", content.DeleteContent)
+	router.PATCH("content/undelete", content.UndeleteContent)
+	router.PATCH("content/update", content.UpdateContent)
 }
