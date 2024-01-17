@@ -32,7 +32,7 @@ func GetContent(c *gin.Context) {
 	var content []Content
 	if result := db.Db.Order("id asc").Find(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
@@ -44,7 +44,7 @@ func GetContentById(c *gin.Context) {
 	id := c.Param("id")
 	if result := db.Db.First(&content, id); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
@@ -56,7 +56,7 @@ func GetContentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
@@ -80,7 +80,7 @@ func CreateContent(c *gin.Context) {
 
 	if result := db.Db.Create(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
@@ -88,17 +88,13 @@ func CreateContent(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, content)
 }
 
-func AddContentUpvote(c *gin.Context) {
+func AddContentUpvoteByUuid(c *gin.Context) {
 	var content Content
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
@@ -108,23 +104,19 @@ func AddContentUpvote(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, content)
 }
 
-func RemoveContentUpvote(c *gin.Context) {
+func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var content Content
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if content.Upvote <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "no upvotes to remove!"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
 		return
 	}
 
@@ -133,17 +125,13 @@ func RemoveContentUpvote(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, content)
 }
 
-func AddContentDownvote(c *gin.Context) {
+func AddContentDownvoteByUuid(c *gin.Context) {
 	var content Content
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
@@ -153,23 +141,19 @@ func AddContentDownvote(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, content)
 }
 
-func RemoveContentDownvote(c *gin.Context) {
+func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var content Content
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if content.Downvote <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "no downvotes to remove!"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
 		return
 	}
 
@@ -178,23 +162,19 @@ func RemoveContentDownvote(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, content)
 }
 
-func DeleteContent(c *gin.Context) {
+func DeleteContentByUuid(c *gin.Context) {
 	var content Content
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if content.Deleted {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "content has already been deleted!"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "content has already been deleted!"})
 		return
 	}
 
@@ -204,23 +184,19 @@ func DeleteContent(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, content)
 }
 
-func UndeleteContent(c *gin.Context) {
+func UndeleteContentByUuid(c *gin.Context) {
 	var content Content
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if !content.Deleted {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "content has not been deleted!"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "content has not been deleted!"})
 		return
 	}
 
@@ -230,7 +206,7 @@ func UndeleteContent(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, content)
 }
 
-func UpdateContent(c *gin.Context) {
+func UpdateContentByUuid(c *gin.Context) {
 	var content Content
 	var updateContent Content
 
@@ -238,15 +214,11 @@ func UpdateContent(c *gin.Context) {
 		return
 	}
 
-	id, ok := c.GetQuery("id")
+	uuid := c.Param("uuid")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "missing id query parameter"})
-	}
-
-	if result := db.Db.First(&content, id); result.Error != nil {
+	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
