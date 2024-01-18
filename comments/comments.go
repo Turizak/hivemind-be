@@ -17,11 +17,17 @@ type Comment struct {
 	Message     string      `json:"Message"`
 	UUID        string      `json:"Uuid"`
 	ContentUUID string      `json:"ContentUuid" gorm:"foreignKey:ContentUuid"` //foreign key gorm associations to content type table Uuid
+	ParentUUID  string      `json:"ParentUuid" gorm:"default:null"`            //if comment is a reply, the ParentUUID will be the UUID of the parent comment
 	Upvote      int32       `json:"Upvote"`
 	Downvote    int32       `json:"Downvote"`
 	Deleted     bool        `json:"Deleted"`
 	Created     pq.NullTime `json:"Created"`
 	LastEdited  pq.NullTime `json:"LastEdited"`
+}
+
+type CommentWithReplies struct {
+	Parent Comment          `json:"Comment"`
+	Replies []Comment       `json:"Replies"`
 }
 
 func CreateComment(c *gin.Context) {
@@ -34,7 +40,7 @@ func CreateComment(c *gin.Context) {
 	}
 
 	if result := db.Db.Where("uuid = ?", uid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -49,7 +55,7 @@ func CreateComment(c *gin.Context) {
 	newComment.LastEdited = pq.NullTime{Valid: false}
 
 	if result := db.Db.Create(&newComment); result.Error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": result.Error.Error(),
 		})
 		return
@@ -57,7 +63,60 @@ func CreateComment(c *gin.Context) {
 
 	content.CommentCount += 1
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusCreated, newComment)
+	c.JSON(http.StatusCreated, newComment)
+}
+
+func CreateCommentReply(c *gin.Context) {
+	var newComment Comment
+	var parentComment Comment
+	var content content.Content
+	uid := c.Param("uuid")
+	pid := c.Param("parentuuid")
+
+	if err := c.BindJSON(&newComment); err != nil {
+		return
+	}
+
+	if result := db.Db.Where("uuid = ?", uid).First(&content); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	if result := db.Db.Where("uuid = ?", pid).First(&parentComment); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	if parentComment.ParentUUID != "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Cannot reply to a reply. Please reply to the parent comment.",
+		})
+		return
+	}
+
+	newComment.UUID = uuid.NewString()
+	newComment.ParentUUID = parentComment.UUID
+	newComment.ContentUUID = content.UUID
+	newComment.Upvote = 0
+	newComment.Downvote = 0
+	newComment.Deleted = false
+	newComment.Created = pq.NullTime{Time: time.Now(), Valid: true}
+	newComment.LastEdited = pq.NullTime{Valid: false}
+
+	if result := db.Db.Create(&newComment); result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	content.CommentCount += 1
+	db.Db.Save(&content)
+	c.JSON(http.StatusCreated, newComment)
 }
 
 func GetCommentsByContentUuid(c *gin.Context) {
@@ -65,13 +124,13 @@ func GetCommentsByContentUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("content_uuid = ?", uuid).Find(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func GetCommentByUuid(c *gin.Context) {
@@ -79,13 +138,40 @@ func GetCommentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
+}
+
+func GetCommentByUuidWithReplies(c *gin.Context) {
+	var comment Comment
+	var replies []Comment
+	uuid := c.Param("uuid")
+
+	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	if result := db.Db.Where("parent_uuid = ?", uuid).Find(&replies); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	commentWithReplies := CommentWithReplies{
+		Parent: comment,
+		Replies: replies,
+	}
+
+	c.JSON(http.StatusOK, commentWithReplies)
 }
 
 func DeleteCommentByUuid(c *gin.Context) {
@@ -94,21 +180,21 @@ func DeleteCommentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if result := db.Db.Where("uuid = ?", comment.ContentUUID).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if comment.Deleted {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "comment has already been deleted!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "comment has already been deleted!"})
 		return
 	}
 
@@ -117,7 +203,7 @@ func DeleteCommentByUuid(c *gin.Context) {
 	content.CommentCount -= 1
 	db.Db.Save(&comment)
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func UndeleteCommentByUuid(c *gin.Context) {
@@ -126,21 +212,21 @@ func UndeleteCommentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if result := db.Db.Where("uuid = ?", comment.ContentUUID).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if !comment.Deleted {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "comment has not been deleted!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "comment has not been deleted!"})
 		return
 	}
 
@@ -149,7 +235,7 @@ func UndeleteCommentByUuid(c *gin.Context) {
 	content.CommentCount += 1
 	db.Db.Save(&comment)
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func UpdateCommentByUuid(c *gin.Context) {
@@ -163,7 +249,7 @@ func UpdateCommentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -176,7 +262,7 @@ func UpdateCommentByUuid(c *gin.Context) {
 	comment.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 
 	db.Db.Save(&comment)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func AddCommentUpvoteByUuid(c *gin.Context) {
@@ -184,7 +270,7 @@ func AddCommentUpvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -192,7 +278,7 @@ func AddCommentUpvoteByUuid(c *gin.Context) {
 
 	comment.Upvote += 1
 	db.Db.Save(&comment)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func RemoveCommentUpvoteByUuid(c *gin.Context) {
@@ -200,20 +286,20 @@ func RemoveCommentUpvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if comment.Upvote <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
 		return
 	}
 
 	comment.Upvote -= 1
 	db.Db.Save(&comment)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func AddCommentDownvoteByUuid(c *gin.Context) {
@@ -221,7 +307,7 @@ func AddCommentDownvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -229,7 +315,7 @@ func AddCommentDownvoteByUuid(c *gin.Context) {
 
 	comment.Downvote += 1
 	db.Db.Save(&comment)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func RemoveCommentDownvoteByUuid(c *gin.Context) {
@@ -237,20 +323,20 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if comment.Downvote <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
 		return
 	}
 
 	comment.Downvote -= 1
 	db.Db.Save(&comment)
-	c.IndentedJSON(http.StatusOK, comment)
+	c.JSON(http.StatusOK, comment)
 }
 
 func jsonDataHasKey(data Comment, key string) (string, bool) {

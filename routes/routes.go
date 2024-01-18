@@ -22,9 +22,12 @@ func Routes(router *gin.Engine) {
 	router.PATCH("content/uuid/:uuid/update", content.UpdateContentByUuid)
 
 	router.GET("/content/uuid/:uuid/comments", comments.GetCommentsByContentUuid)
+
 	router.POST("/content/uuid/:uuid/comment", comments.CreateComment)
+	router.POST("/content/uuid/:uuid/comment/:parentuuid/reply", comments.CreateCommentReply)
 
 	router.GET("/comment/uuid/:uuid", comments.GetCommentByUuid)
+	router.GET("/comment/uuid/:uuid/replies", comments.GetCommentByUuidWithReplies)
 	router.PATCH("comment/uuid/:uuid/delete", comments.DeleteCommentByUuid)
 	router.PATCH("comment/uuid/:uuid/undelete", comments.UndeleteCommentByUuid)
 	router.PATCH("comment/uuid/:uuid/update", comments.UpdateCommentByUuid)

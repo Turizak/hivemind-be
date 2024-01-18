@@ -3,24 +3,23 @@ package db
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq" // don't forget to add it. It doesn't be added automatically
+	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"os"
 	"strconv"
 )
 
-var Db *gorm.DB //created outside to make it global.
+var Db *gorm.DB
 
-// make sure your function start with uppercase to call outside of the directory.
 func ConnectDatabase() {
-	err := godotenv.Load() //by default, it is .env so we don't have to write
+	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Error is occurred  on .env file please check")
 	}
-	//we read our .env file
+
 	host := os.Getenv("HOST")
-	port, _ := strconv.Atoi(os.Getenv("PORT")) // don't forget to convert int since port is int type.
+	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	user := os.Getenv("ACCOUNT")
 	dbname := os.Getenv("DB_NAME")
 	pass := os.Getenv("PASSWORD")
