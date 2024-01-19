@@ -31,36 +31,36 @@ type Content struct {
 func GetContent(c *gin.Context) {
 	var content []Content
 	if result := db.Db.Order("id asc").Find(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, &content)
+	c.JSON(http.StatusOK, &content)
 }
 
 func GetContentById(c *gin.Context) {
 	var content Content
 	id := c.Param("id")
 	if result := db.Db.First(&content, id); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func GetContentByUuid(c *gin.Context) {
 	var content Content
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func CreateContent(c *gin.Context) {
@@ -79,13 +79,13 @@ func CreateContent(c *gin.Context) {
 	content.Created = pq.NullTime{Time: time.Now(), Valid: true}
 
 	if result := db.Db.Create(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, content)
+	c.JSON(http.StatusCreated, content)
 }
 
 func AddContentUpvoteByUuid(c *gin.Context) {
@@ -93,7 +93,7 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -101,7 +101,7 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 
 	content.Upvote += 1
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func RemoveContentUpvoteByUuid(c *gin.Context) {
@@ -109,20 +109,20 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if content.Upvote <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
 		return
 	}
 
 	content.Upvote -= 1
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func AddContentDownvoteByUuid(c *gin.Context) {
@@ -130,7 +130,7 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -138,7 +138,7 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 
 	content.Downvote += 1
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func RemoveContentDownvoteByUuid(c *gin.Context) {
@@ -146,20 +146,20 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if content.Downvote <= 0 {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
 		return
 	}
 
 	content.Downvote -= 1
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func DeleteContentByUuid(c *gin.Context) {
@@ -167,21 +167,21 @@ func DeleteContentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if content.Deleted {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "content has already been deleted!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "content has already been deleted!"})
 		return
 	}
 
 	content.Deleted = true
 	content.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func UndeleteContentByUuid(c *gin.Context) {
@@ -189,21 +189,21 @@ func UndeleteContentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
 	}
 
 	if !content.Deleted {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"Error": "content has not been deleted!"})
+		c.JSON(http.StatusBadRequest, gin.H{"Error": "content has not been deleted!"})
 		return
 	}
 
 	content.Deleted = false
 	content.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func UpdateContentByUuid(c *gin.Context) {
@@ -217,7 +217,7 @@ func UpdateContentByUuid(c *gin.Context) {
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
 		return
@@ -239,7 +239,7 @@ func UpdateContentByUuid(c *gin.Context) {
 	content.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 
 	db.Db.Save(&content)
-	c.IndentedJSON(http.StatusOK, content)
+	c.JSON(http.StatusOK, content)
 }
 
 func jsonDataHasKey(data Content, key string) (string, bool) {

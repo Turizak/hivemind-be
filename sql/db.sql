@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS comments
     downvote integer,
     deleted boolean,
     uuid character varying NOT NULL UNIQUE,
+    parent_uuid character varying,
     content_uuid character varying NOT NULL REFERENCES contents(uuid),
     created timestamp with time zone NOT NULL,
     last_edited timestamp with time zone
