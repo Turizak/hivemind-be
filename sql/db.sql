@@ -1,13 +1,34 @@
 DROP TABLE IF EXISTS comments;
+
 DROP TABLE IF EXISTS contents;
+
+DROP TABLE IF EXISTS hives;
+
+CREATE TABLE IF NOT EXISTS hives (
+    id SERIAL PRIMARY KEY,
+    name character varying NOT NULL UNIQUE,
+    creator character varying NOT NULL,
+    description character varying NOT NULL,
+    uuid character varying NOT NULL UNIQUE,
+    member_count integer,
+    total_upvotes integer,
+    total_downvotes integer,
+    total_comments integer,
+    total_content integer,
+    archived boolean,
+    banned boolean,
+    created timestamp with time zone NOT NULL,
+    last_edited timestamp with time zone
+);
 
 CREATE TABLE IF NOT EXISTS contents (
     id SERIAL PRIMARY KEY,
-    category character varying NOT NULL,
+    hive character varying NOT NULL,
     title character varying NOT NULL,
     author character varying NOT NULL,
     message character varying NOT NULL,
     uuid character varying NOT NULL UNIQUE,
+    hive_uuid character varying NOT NULL REFERENCES hives(uuid),
     link character varying,
     image_link character varying,
     upvote integer,
@@ -18,8 +39,7 @@ CREATE TABLE IF NOT EXISTS contents (
     last_edited timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS comments
-(
+CREATE TABLE IF NOT EXISTS comments (
     id SERIAL PRIMARY KEY,
     author character varying NOT NULL,
     message character varying NOT NULL,
@@ -32,5 +52,3 @@ CREATE TABLE IF NOT EXISTS comments
     created timestamp with time zone NOT NULL,
     last_edited timestamp with time zone
 );
-
-

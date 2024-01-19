@@ -2,6 +2,7 @@ package content
 
 import (
 	"example/hivemind-be/db"
+	"example/hivemind-be/hive"
 	"net/http"
 	"time"
 
@@ -13,11 +14,12 @@ import (
 // GORM uses the name of your type as the DB table to query. Here the type is Message so gorm will use the messages table by default.
 type Content struct {
 	ID           int32       `json:"Id" gorm:"primaryKey:type:int32"` //cannot be updated
-	Category     string      `json:"Category"`                        //cannot be updated
+	Hive         string      `json:"Hive"`                            //cannot be updated
 	Title        string      `json:"Title"`                           //can be updated
 	Author       string      `json:"Author"`                          //cannot be updated
 	Message      string      `json:"Message"`                         //can be updated
 	UUID         string      `json:"Uuid"`                            //cannot be update
+	HiveUUID     string      `json:"HiveUuid"`                        //cannot be update
 	Link         string      `json:"Link" gorm:"default:null"`        //can be updated
 	ImageLink    string      `json:"ImageLink" gorm:"default:null"`   //can be updated
 	Upvote       int32       `json:"Upvote"`                          //cannot be updated
@@ -63,14 +65,35 @@ func GetContentByUuid(c *gin.Context) {
 	c.JSON(http.StatusOK, content)
 }
 
+func GetContentByHiveUuid(c *gin.Context) {
+	var content []Content
+	uuid := c.Param("uuid")
+	if result := db.Db.Where("hive_uuid = ?", uuid).Find(&content); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, content)
+}
+
 func CreateContent(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 
 	if err := c.BindJSON(&content); err != nil {
 		return
 	}
 
+	if result := db.Db.Where("name = ?", content.Hive).First(&hive); result.Error != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
+			"Error": "Hive not found! Please use an existing hive or create a new hive first.",
+		})
+		return
+	}
+
 	content.UUID = uuid.NewString()
+	content.HiveUUID = hive.UUID
 	content.Upvote = 0
 	content.Downvote = 0
 	content.CommentCount = 0
@@ -80,16 +103,19 @@ func CreateContent(c *gin.Context) {
 
 	if result := db.Db.Create(&content); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"Error": result.Error.Error(),
+			"Error": "There was an error creating this content. Please try again.",
 		})
 		return
 	}
 
+	hive.TotalContent += 1
+	db.Db.Save(&hive)
 	c.JSON(http.StatusCreated, content)
 }
 
 func AddContentUpvoteByUuid(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -99,13 +125,23 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
 	content.Upvote += 1
+	hive.TotalUpvotes += 1
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, content)
 }
 
 func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -120,13 +156,23 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
 	content.Upvote -= 1
+	hive.TotalUpvotes -= 1
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, content)
 }
 
 func AddContentDownvoteByUuid(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -136,13 +182,23 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
 	content.Downvote += 1
+	hive.TotalDownvotes += 1
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, content)
 }
 
 func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -157,13 +213,23 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
 	content.Downvote -= 1
+	hive.TotalDownvotes -= 1
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, content)
 }
 
 func DeleteContentByUuid(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -178,14 +244,24 @@ func DeleteContentByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	hive.TotalContent -= 1
 	content.Deleted = true
 	content.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, content)
 }
 
 func UndeleteContentByUuid(c *gin.Context) {
 	var content Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -200,9 +276,18 @@ func UndeleteContentByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	hive.TotalContent += 1
 	content.Deleted = false
 	content.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, content)
 }
 

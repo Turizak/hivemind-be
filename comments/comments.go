@@ -3,6 +3,7 @@ package comments
 import (
 	"example/hivemind-be/content"
 	"example/hivemind-be/db"
+	"example/hivemind-be/hive"
 	"net/http"
 	"time"
 
@@ -26,13 +27,14 @@ type Comment struct {
 }
 
 type CommentWithReplies struct {
-	Parent Comment          `json:"Comment"`
-	Replies []Comment       `json:"Replies"`
+	Parent  Comment   `json:"Comment"`
+	Replies []Comment `json:"Replies"`
 }
 
 func CreateComment(c *gin.Context) {
 	var newComment Comment
 	var content content.Content
+	var hive hive.Hive
 	uid := c.Param("uuid")
 
 	if err := c.BindJSON(&newComment); err != nil {
@@ -61,8 +63,17 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	hive.TotalComments += 1
 	content.CommentCount += 1
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusCreated, newComment)
 }
 
@@ -70,6 +81,7 @@ func CreateCommentReply(c *gin.Context) {
 	var newComment Comment
 	var parentComment Comment
 	var content content.Content
+	var hive hive.Hive
 	uid := c.Param("uuid")
 	pid := c.Param("parentuuid")
 
@@ -114,8 +126,17 @@ func CreateCommentReply(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	hive.TotalComments += 1
 	content.CommentCount += 1
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusCreated, newComment)
 }
 
@@ -167,7 +188,7 @@ func GetCommentByUuidWithReplies(c *gin.Context) {
 	}
 
 	commentWithReplies := CommentWithReplies{
-		Parent: comment,
+		Parent:  comment,
 		Replies: replies,
 	}
 
@@ -177,6 +198,7 @@ func GetCommentByUuidWithReplies(c *gin.Context) {
 func DeleteCommentByUuid(c *gin.Context) {
 	var comment Comment
 	var content content.Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
@@ -198,17 +220,27 @@ func DeleteCommentByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	hive.TotalComments -= 1
 	comment.Deleted = true
 	comment.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	content.CommentCount -= 1
 	db.Db.Save(&comment)
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, comment)
 }
 
 func UndeleteCommentByUuid(c *gin.Context) {
 	var comment Comment
 	var content content.Content
+	var hive hive.Hive
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
@@ -230,11 +262,20 @@ func UndeleteCommentByUuid(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	hive.TotalComments += 1
 	comment.Deleted = false
 	comment.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	content.CommentCount += 1
 	db.Db.Save(&comment)
 	db.Db.Save(&content)
+	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, comment)
 }
 
