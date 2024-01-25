@@ -4,6 +4,19 @@ DROP TABLE IF EXISTS contents;
 
 DROP TABLE IF EXISTS hives;
 
+DROP TABLE IF EXISTS accounts;
+
+CREATE TABLE IF NOT EXISTS accounts (
+    id SERIAL PRIMARY KEY,
+    username character varying NOT NULL UNIQUE,
+    email character varying NOT NULL UNIQUE,
+    password character varying NOT NULL,
+    uuid character varying NOT NULL UNIQUE,
+    deleted boolean,
+    banned boolean,
+    created timestamp with time zone NOT NULL,
+);
+
 CREATE TABLE IF NOT EXISTS hives (
     id SERIAL PRIMARY KEY,
     name character varying NOT NULL UNIQUE,

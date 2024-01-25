@@ -1,9 +1,10 @@
 package routes
 
 import (
-	"example/hivemind-be/comments"
+	"example/hivemind-be/comment"
 	"example/hivemind-be/content"
 	"example/hivemind-be/hive"
+	"example/hivemind-be/account"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,20 +23,20 @@ func Routes(router *gin.Engine) {
 	router.PATCH("/content/uuid/:uuid/update", content.UpdateContentByUuid)
 
 	// Comment via Content
-	router.GET("/content/uuid/:uuid/comments", comments.GetCommentsByContentUuid)
-	router.POST("/content/uuid/:uuid/comment", comments.CreateComment)
-	router.POST("/content/uuid/:uuid/comment/:parentuuid/reply", comments.CreateCommentReply)
+	router.GET("/content/uuid/:uuid/comment", comment.GetCommentsByContentUuid)
+	router.POST("/content/uuid/:uuid/comment", comment.CreateComment)
+	router.POST("/content/uuid/:uuid/comment/:parentuuid/reply", comment.CreateCommentReply)
 
 	// Comment
-	router.GET("/comment/uuid/:uuid", comments.GetCommentByUuid)
-	router.GET("/comment/uuid/:uuid/replies", comments.GetCommentByUuidWithReplies)
-	router.PATCH("/comment/uuid/:uuid/delete", comments.DeleteCommentByUuid)
-	router.PATCH("/comment/uuid/:uuid/undelete", comments.UndeleteCommentByUuid)
-	router.PATCH("/comment/uuid/:uuid/update", comments.UpdateCommentByUuid)
-	router.PATCH("/comment/uuid/:uuid/add-upvote", comments.AddCommentUpvoteByUuid)
-	router.PATCH("/comment/uuid/:uuid/remove-upvote", comments.RemoveCommentUpvoteByUuid)
-	router.PATCH("/comment/uuid/:uuid/add-downvote", comments.AddCommentDownvoteByUuid)
-	router.PATCH("/comment/uuid/:uuid/remove-downvote", comments.RemoveCommentDownvoteByUuid)
+	router.GET("/comment/uuid/:uuid", comment.GetCommentByUuid)
+	router.GET("/comment/uuid/:uuid/replies", comment.GetCommentByUuidWithReplies)
+	router.PATCH("/comment/uuid/:uuid/delete", comment.DeleteCommentByUuid)
+	router.PATCH("/comment/uuid/:uuid/undelete", comment.UndeleteCommentByUuid)
+	router.PATCH("/comment/uuid/:uuid/update", comment.UpdateCommentByUuid)
+	router.PATCH("/comment/uuid/:uuid/add-upvote", comment.AddCommentUpvoteByUuid)
+	router.PATCH("/comment/uuid/:uuid/remove-upvote", comment.RemoveCommentUpvoteByUuid)
+	router.PATCH("/comment/uuid/:uuid/add-downvote", comment.AddCommentDownvoteByUuid)
+	router.PATCH("/comment/uuid/:uuid/remove-downvote", comment.RemoveCommentDownvoteByUuid)
 
 	// Hive
 	router.GET("/hive", hive.GetHive)
@@ -46,4 +47,7 @@ func Routes(router *gin.Engine) {
 	router.PATCH("/hive/uuid/:uuid/archive", hive.ArchiveHiveByUuid)
 	router.PATCH("/hive/uuid/:uuid/unarchive", hive.UnArchiveHiveByUuid)
 	router.PATCH("/hive/uuid/:uuid/update", hive.UpdateHiveByUuid)
+
+	// Account
+	router.POST("/account/create", account.CreateAccount)
 }
