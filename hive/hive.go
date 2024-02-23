@@ -1,6 +1,7 @@
 package hive
 
 import (
+	"example/hivemind-be/account"
 	"example/hivemind-be/db"
 	"fmt"
 	"net/http"
@@ -17,6 +18,7 @@ type Hive struct {
 	Creator        string      `json:"Creator"`
 	Description    string      `json:"Description"`
 	UUID           string      `json:"Uuid"`
+	AccountUUID    string      `json:"AccountUUID"`
 	MemberCount    int32       `json:"MemberCount"`
 	TotalUpvotes   int32       `json:"TotalUpvotes"`
 	TotalDownvotes int32       `json:"TotalDownvotes"`
@@ -30,12 +32,21 @@ type Hive struct {
 
 func CreateHive(c *gin.Context) {
 	var hive Hive
+	var account account.Account
 
 	if err := c.BindJSON(&hive); err != nil {
 		return
 	}
 
+	if result := db.Db.Where("username = ?", hive.Creator).First(&account); result.Error != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
 	hive.UUID = uuid.NewString()
+	hive.AccountUUID = account.UUID
 	hive.MemberCount = 0
 	hive.TotalUpvotes = 0
 	hive.TotalDownvotes = 0

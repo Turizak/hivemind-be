@@ -1,10 +1,11 @@
 package routes
 
 import (
+	"example/hivemind-be/account"
 	"example/hivemind-be/comment"
 	"example/hivemind-be/content"
 	"example/hivemind-be/hive"
-	"example/hivemind-be/account"
+
 	"github.com/gin-gonic/gin"
 )
 

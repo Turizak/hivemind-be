@@ -1,6 +1,7 @@
 package comment
 
 import (
+	"example/hivemind-be/account"
 	"example/hivemind-be/content"
 	"example/hivemind-be/db"
 	"example/hivemind-be/hive"
@@ -17,6 +18,7 @@ type Comment struct {
 	Author      string      `json:"Author"`
 	Message     string      `json:"Message"`
 	UUID        string      `json:"Uuid"`
+	AccountUUID string      `json:"AccountUUID"`
 	ContentUUID string      `json:"ContentUuid" gorm:"foreignKey:ContentUuid"` //foreign key gorm associations to content type table Uuid
 	ParentUUID  string      `json:"ParentUuid" gorm:"default:null"`            //if comment is a reply, the ParentUUID will be the UUID of the parent comment
 	Upvote      int32       `json:"Upvote"`
@@ -35,6 +37,7 @@ func CreateComment(c *gin.Context) {
 	var newComment Comment
 	var content content.Content
 	var hive hive.Hive
+	var account account.Account
 	uid := c.Param("uuid")
 
 	if err := c.BindJSON(&newComment); err != nil {
@@ -48,8 +51,16 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("username = ?", newComment.Author).First(&account); result.Error != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
 	newComment.UUID = uuid.NewString()
 	newComment.ContentUUID = content.UUID
+	newComment.AccountUUID = account.UUID
 	newComment.Upvote = 0
 	newComment.Downvote = 0
 	newComment.Deleted = false
@@ -82,6 +93,7 @@ func CreateCommentReply(c *gin.Context) {
 	var parentComment Comment
 	var content content.Content
 	var hive hive.Hive
+	var account account.Account
 	uid := c.Param("uuid")
 	pid := c.Param("parentuuid")
 
@@ -110,9 +122,17 @@ func CreateCommentReply(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("username = ?", newComment.Author).First(&account); result.Error != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
 	newComment.UUID = uuid.NewString()
 	newComment.ParentUUID = parentComment.UUID
 	newComment.ContentUUID = content.UUID
+	newComment.AccountUUID = account.UUID
 	newComment.Upvote = 0
 	newComment.Downvote = 0
 	newComment.Deleted = false

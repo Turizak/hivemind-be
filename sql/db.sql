@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     uuid character varying NOT NULL UNIQUE,
     deleted boolean,
     banned boolean,
-    created timestamp with time zone NOT NULL,
+    created timestamp with time zone NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS hives (
@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS hives (
     creator character varying NOT NULL,
     description character varying NOT NULL,
     uuid character varying NOT NULL UNIQUE,
+    account_uuid character varying NOT NULL REFERENCES accounts(uuid),
     member_count integer,
     total_upvotes integer,
     total_downvotes integer,
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS contents (
     message character varying NOT NULL,
     uuid character varying NOT NULL UNIQUE,
     hive_uuid character varying NOT NULL REFERENCES hives(uuid),
+    account_uuid character varying NOT NULL REFERENCES accounts(uuid),
     link character varying,
     image_link character varying,
     upvote integer,
@@ -62,6 +64,7 @@ CREATE TABLE IF NOT EXISTS comments (
     uuid character varying NOT NULL UNIQUE,
     parent_uuid character varying,
     content_uuid character varying NOT NULL REFERENCES contents(uuid),
+    account_uuid character varying NOT NULL REFERENCES accounts(uuid),
     created timestamp with time zone NOT NULL,
     last_edited timestamp with time zone
 );

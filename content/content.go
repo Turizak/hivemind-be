@@ -1,6 +1,7 @@
 package content
 
 import (
+	"example/hivemind-be/account"
 	"example/hivemind-be/db"
 	"example/hivemind-be/hive"
 	"net/http"
@@ -20,6 +21,7 @@ type Content struct {
 	Message      string      `json:"Message"`                         //can be updated
 	UUID         string      `json:"Uuid"`                            //cannot be update
 	HiveUUID     string      `json:"HiveUuid"`                        //cannot be update
+	AccountUUID  string      `json:"AccountUuid"`                     //cannot be update
 	Link         string      `json:"Link" gorm:"default:null"`        //can be updated
 	ImageLink    string      `json:"ImageLink" gorm:"default:null"`   //can be updated
 	Upvote       int32       `json:"Upvote"`                          //cannot be updated
@@ -80,6 +82,7 @@ func GetContentByHiveUuid(c *gin.Context) {
 func CreateContent(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
+	var account account.Account
 
 	if err := c.BindJSON(&content); err != nil {
 		return
@@ -92,8 +95,16 @@ func CreateContent(c *gin.Context) {
 		return
 	}
 
+	if result := db.Db.Where("username = ?", content.Author).First(&account); result.Error != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
 	content.UUID = uuid.NewString()
 	content.HiveUUID = hive.UUID
+	content.AccountUUID = account.UUID
 	content.Upvote = 0
 	content.Downvote = 0
 	content.CommentCount = 0
