@@ -33,6 +33,15 @@ type CommentWithReplies struct {
 	Replies []Comment `json:"Replies"`
 }
 
+type CommentVote struct {
+	ID          int32
+	AccountUUID string
+	CommentUUID string
+	Upvote      bool
+	Downvote    bool
+	LastEdited  pq.NullTime
+}
+
 func CreateComment(c *gin.Context) {
 	var newComment Comment
 	var content content.Content
@@ -328,8 +337,12 @@ func UpdateCommentByUuid(c *gin.Context) {
 
 func AddCommentUpvoteByUuid(c *gin.Context) {
 	var comment Comment
+	var account account.Account
+	var commentVote CommentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check comment exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -337,15 +350,66 @@ func AddCommentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	comment.Upvote += 1
-	db.Db.Save(&comment)
-	c.JSON(http.StatusOK, comment)
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"comment_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&commentVote); result.Error != nil {
+		//user has no record
+		comment.Upvote += 1
+		commentVote.AccountUUID = accountUuid
+		commentVote.CommentUUID = uuid
+		commentVote.Upvote = true
+		commentVote.Downvote = false
+		commentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&comment)
+		db.Db.Save(&commentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully upvoted!",
+		})
+		return
+	}
+
+	//error if user has already voted
+	if commentVote.Upvote || commentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has already voted on this comment!",
+		})
+		return
+	}
+
+	//user has false for both upvote and downvote
+	if !commentVote.Upvote && !commentVote.Downvote {
+		comment.Upvote += 1
+		commentVote.Upvote = true
+		commentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&comment)
+		db.Db.Save(&commentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully upvoted!",
+		})
+		return
+	}
 }
 
 func RemoveCommentUpvoteByUuid(c *gin.Context) {
 	var comment Comment
+	var account account.Account
+	var commentVote CommentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check comment exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -353,20 +417,54 @@ func RemoveCommentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	if comment.Upvote <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"comment_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&commentVote); result.Error != nil {
+		//user has not voted at all
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not voted on this content!",
+		})
+		return
+	}
+
+	//error if user has not already upvoted or has downvoted
+	if !commentVote.Upvote || commentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not upvoted on this comment!",
+		})
 		return
 	}
 
 	comment.Upvote -= 1
+	commentVote.Upvote = false
+	commentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&comment)
-	c.JSON(http.StatusOK, comment)
+	db.Db.Save(&commentVote)
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "User upvote removed sucessfully!",
+	})
 }
 
 func AddCommentDownvoteByUuid(c *gin.Context) {
 	var comment Comment
+	var account account.Account
+	var commentVote CommentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check comment exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -374,15 +472,66 @@ func AddCommentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	comment.Downvote += 1
-	db.Db.Save(&comment)
-	c.JSON(http.StatusOK, comment)
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"comment_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&commentVote); result.Error != nil {
+		//user has no record
+		comment.Downvote += 1
+		commentVote.AccountUUID = accountUuid
+		commentVote.CommentUUID = uuid
+		commentVote.Upvote = false
+		commentVote.Downvote = true
+		commentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&comment)
+		db.Db.Save(&commentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully downvoted!",
+		})
+		return
+	}
+
+	//error if user has already voted
+	if commentVote.Upvote || commentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has already voted on this comment!",
+		})
+		return
+	}
+
+	//user has false for both upvote and downvote
+	if !commentVote.Upvote && !commentVote.Downvote {
+		comment.Downvote += 1
+		commentVote.Downvote = true
+		commentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&comment)
+		db.Db.Save(&commentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully downvoted!",
+		})
+		return
+	}
 }
 
 func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	var comment Comment
+	var account account.Account
+	var commentVote CommentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check comment exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&comment); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -390,14 +539,44 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	if comment.Downvote <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"comment_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&commentVote); result.Error != nil {
+		//user has not voted at all
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not voted on this comment!",
+		})
+		return
+	}
+
+	//error if user has not already downvoted or has upvoted
+	if commentVote.Upvote || !commentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not downvoted on this comment!",
+		})
 		return
 	}
 
 	comment.Downvote -= 1
+	commentVote.Downvote = false
+	commentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&comment)
-	c.JSON(http.StatusOK, comment)
+	db.Db.Save(&commentVote)
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "User downvote removed sucessfully!",
+	})
 }
 
 func jsonDataHasKey(data Comment, key string) (string, bool) {
