@@ -68,3 +68,12 @@ CREATE TABLE IF NOT EXISTS comments (
     created timestamp with time zone NOT NULL,
     last_edited timestamp with time zone
 );
+
+CREATE TABLE IF NOT EXISTS content_votes (
+    id SERIAL PRIMARY KEY,
+    upvote boolean,
+    downvote boolean,
+    content_uuid character varying NOT NULL REFERENCES contents(uuid),
+    account_uuid character varying NOT NULL REFERENCES accounts(uuid),
+    last_edited timestamp with time zone NOT NULL
+);

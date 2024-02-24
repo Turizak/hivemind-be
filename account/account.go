@@ -33,16 +33,16 @@ func CreateAccount(c *gin.Context) {
 	}
 
 	addr, err := mail.ParseAddress(strings.ToLower(acc.Email))
-    if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Error: Email address format is not valid. Please us a valid email address.",
 		})
 		return
-    }
+	}
 
 	hashedPassword, err := hashPassword(acc.Password)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Error: A error occurred creating the account. Please try again.",
 		})
 		return
@@ -57,13 +57,13 @@ func CreateAccount(c *gin.Context) {
 	acc.Created = pq.NullTime{Time: time.Now(), Valid: true}
 
 	if result := db.Db.Create(&acc); result.Error != nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{
-			"Error": result.Error.Error(),
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Could not create account. Please try again.",
 		})
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, acc)
+	c.JSON(http.StatusCreated, acc)
 }
 
 // Hash password
