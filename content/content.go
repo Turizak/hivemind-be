@@ -32,6 +32,15 @@ type Content struct {
 	LastEdited   pq.NullTime `json:"LastEdited"`                      //updated when an update occurs
 }
 
+type ContentVote struct {
+	ID          int32
+	AccountUUID string
+	ContentUUID string
+	Upvote      bool
+	Downvote    bool
+	LastEdited  pq.NullTime
+}
+
 func GetContent(c *gin.Context) {
 	var content []Content
 	if result := db.Db.Order("id asc").Find(&content); result.Error != nil {
@@ -127,8 +136,12 @@ func CreateContent(c *gin.Context) {
 func AddContentUpvoteByUuid(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
+	var account account.Account
+	var contentVote ContentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check content exsit
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -136,6 +149,7 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
+	//check hive exist
 	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -143,18 +157,71 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	content.Upvote += 1
-	hive.TotalUpvotes += 1
-	db.Db.Save(&content)
-	db.Db.Save(&hive)
-	c.JSON(http.StatusOK, content)
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"content_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&contentVote); result.Error != nil {
+		//user has no record
+		content.Upvote += 1
+		hive.TotalUpvotes += 1
+		contentVote.AccountUUID = accountUuid
+		contentVote.ContentUUID = uuid
+		contentVote.Upvote = true
+		contentVote.Downvote = false
+		contentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&content)
+		db.Db.Save(&hive)
+		db.Db.Save(&contentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully upvoted!",
+		})
+		return
+	}
+
+	//error if user has already voted
+	if contentVote.Upvote || contentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has already voted on this content!",
+		})
+		return
+	}
+
+	//user has false for both upvote and downvote
+	if !contentVote.Upvote && !contentVote.Downvote {
+		content.Upvote += 1
+		hive.TotalUpvotes += 1
+		contentVote.Upvote = true
+		contentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&content)
+		db.Db.Save(&hive)
+		db.Db.Save(&contentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully upvoted!",
+		})
+		return
+	}
 }
 
 func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
+	var account account.Account
+	var contentVote ContentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check content exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -162,30 +229,65 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	if content.Upvote <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "no upvotes to remove!"})
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
 		return
 	}
 
+	//check hive exist
 	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"content_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&contentVote); result.Error != nil {
+		//user has not voted at all
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not voted on this content!",
+		})
+		return
+	}
+
+	//error if user has not already upvoted or has downvoted
+	if !contentVote.Upvote || contentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not upvoted on this content!",
 		})
 		return
 	}
 
 	content.Upvote -= 1
 	hive.TotalUpvotes -= 1
+	contentVote.Upvote = false
+	contentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&content)
 	db.Db.Save(&hive)
-	c.JSON(http.StatusOK, content)
+	db.Db.Save(&contentVote)
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "User upvote removed sucessfully!",
+	})
 }
 
 func AddContentDownvoteByUuid(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
+	var account account.Account
+	var contentVote ContentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check content exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -193,6 +295,7 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
+	//check hive exist
 	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -200,18 +303,71 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	content.Downvote += 1
-	hive.TotalDownvotes += 1
-	db.Db.Save(&content)
-	db.Db.Save(&hive)
-	c.JSON(http.StatusOK, content)
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"content_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&contentVote); result.Error != nil {
+		//user has no record
+		content.Downvote += 1
+		hive.TotalDownvotes += 1
+		contentVote.AccountUUID = accountUuid
+		contentVote.ContentUUID = uuid
+		contentVote.Upvote = false
+		contentVote.Downvote = true
+		contentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&content)
+		db.Db.Save(&hive)
+		db.Db.Save(&contentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully downvoted!",
+		})
+		return
+	}
+
+	//error if user has already voted
+	if contentVote.Upvote || contentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has already voted on this content!",
+		})
+		return
+	}
+
+	//user has false for both upvote and downvote
+	if !contentVote.Upvote && !contentVote.Downvote {
+		content.Downvote += 1
+		hive.TotalDownvotes += 1
+		contentVote.Downvote = true
+		contentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
+		db.Db.Save(&content)
+		db.Db.Save(&hive)
+		db.Db.Save(&contentVote)
+		c.JSON(http.StatusOK, gin.H{
+			"Message": "User successfully downvoted!",
+		})
+		return
+	}
 }
 
 func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
+	var account account.Account
+	var contentVote ContentVote
 	uuid := c.Param("uuid")
+	accountUuid := c.Query("auuid")
 
+	//check content exist
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -219,23 +375,54 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 		return
 	}
 
-	if content.Downvote <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"Error": "no downvotes to remove!"})
+	//check account exist
+	if result := db.Db.Where("uuid = ?", accountUuid).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "An error occurred. Please try again.",
+		})
 		return
 	}
 
+	//check hive exist
 	if result := db.Db.Where("uuid = ?", content.HiveUUID).First(&hive); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
+		})
+		return
+	}
+
+	voteQuery := map[string]interface{}{
+		"account_uuid": accountUuid,
+		"content_uuid": uuid,
+	}
+
+	//check account vote
+	if result := db.Db.Where(voteQuery).First(&contentVote); result.Error != nil {
+		//user has not voted at all
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not voted on this content!",
+		})
+		return
+	}
+
+	//error if user has not already downvoted or has upvoted
+	if contentVote.Upvote || !contentVote.Downvote {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "User has not downvoted on this content!",
 		})
 		return
 	}
 
 	content.Downvote -= 1
 	hive.TotalDownvotes -= 1
+	contentVote.Downvote = false
+	contentVote.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 	db.Db.Save(&content)
 	db.Db.Save(&hive)
-	c.JSON(http.StatusOK, content)
+	db.Db.Save(&contentVote)
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "User downvote removed sucessfully!",
+	})
 }
 
 func DeleteContentByUuid(c *gin.Context) {
