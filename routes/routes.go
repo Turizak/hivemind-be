@@ -51,4 +51,5 @@ func Routes(router *gin.Engine) {
 
 	// Account
 	router.POST("/account/create", account.CreateAccount)
+	router.POST("/account/login", account.AccountLogin)
 }
