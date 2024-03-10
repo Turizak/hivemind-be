@@ -80,8 +80,35 @@ func hashPassword(password string) (string, error) {
 
 // Check if two passwords match using Bcrypt's CompareHashAndPassword
 // which return nil on success and an error on failure.
-//   func doPasswordsMatch(hashedPassword, currPassword string) bool {
-// 	err := bcrypt.CompareHashAndPassword(
-// 	  []byte(hashedPassword), []byte(currPassword))
-// 	return err == nil
-//   }
+func doPasswordsMatch(hashedPassword, currPassword string) bool {
+	err := bcrypt.CompareHashAndPassword(
+		[]byte(hashedPassword), []byte(currPassword))
+	return err == nil
+}
+
+func AccountLogin(c *gin.Context) {
+	var acc Account
+	var account Account
+
+	if err := c.BindJSON(&acc); err != nil {
+		return
+	}
+
+	if result := db.Db.Where("username = ?", acc.Username).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Account not found. Please try again.",
+		})
+		return
+	}
+
+	if !doPasswordsMatch(account.Password, acc.Password) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Password is incorrect. Please try again.",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "A token will be returned here.",
+	})
+}

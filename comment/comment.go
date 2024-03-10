@@ -150,7 +150,7 @@ func CreateCommentReply(c *gin.Context) {
 
 	if result := db.Db.Create(&newComment); result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": result.Error.Error(),
+			"Error": result.Error.Error(),
 		})
 		return
 	}
