@@ -2,6 +2,7 @@ package account
 
 import (
 	"example/hivemind-be/db"
+	"example/hivemind-be/token"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -108,7 +109,38 @@ func AccountLogin(c *gin.Context) {
 		return
 	}
 
+	token, err := token.CreateToken(account.Username, account.UUID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Error: A error occurred creating the token. Please try again.",
+		})
+		return
+	}
+
+	c.SetCookie("Token", token, 86400, "", "", false, true)
 	c.JSON(http.StatusOK, gin.H{
-		"Message": "A token will be returned here.",
+		"Token": token,
+	})
+}
+
+func ValidateAccountToken(c *gin.Context) {
+	cookie, err := c.Request.Cookie("Token")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+
+	tokenString := cookie.Value
+	if err := token.VerifyToken(tokenString); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Invalid token. Please try again.",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "Token is valid.",
 	})
 }
