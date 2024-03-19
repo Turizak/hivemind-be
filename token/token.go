@@ -16,12 +16,11 @@ var secretKey = []byte(os.Getenv("TOKEN_SECRET"))
 // - "accountUuid": the UUID of the account
 // - "exp": the expiration time of the token, set to 24 hours from the current time
 // The function returns the generated token string and an error if any occurred.
-func CreateToken(username string, uuid string) (string, error) {
+func CreateToken(username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"username":    username,
-			"accountUuid": uuid,
-			"exp":         time.Now().Add(time.Hour * 24).Unix(),
+			"username": username,
+			"exp":      time.Now().Add(time.Hour * 24).Unix(),
 		})
 
 	tokenString, err := token.SignedString(secretKey)
