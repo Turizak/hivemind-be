@@ -95,7 +95,7 @@ func AccountLogin(c *gin.Context) {
 		return
 	}
 
-	if result := db.Db.Where("username = ?", acc.Username).First(&account); result.Error != nil {
+	if result := db.Db.Where("email = ?", strings.ToLower(acc.Email)).First(&account); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Account not found. Please try again.",
 		})
