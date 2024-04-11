@@ -117,7 +117,7 @@ func AccountLogin(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("Token", token, 3600*24, "/", "localhost", false, true)
+	c.SetCookie("Token", token, 3600*24, "/", "https://hivemind-be.fly.dev", false, true)
 	c.JSON(http.StatusOK, gin.H{
 		"Token": token,
 	})
