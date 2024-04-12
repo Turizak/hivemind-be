@@ -117,23 +117,20 @@ func AccountLogin(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("Token", token, 3600*24, "/", "https://hivemind-be.fly.dev", false, true)
 	c.JSON(http.StatusOK, gin.H{
 		"Token": token,
 	})
 }
 
 func ValidateAccountToken(c *gin.Context) {
-	cookie, err := c.Request.Cookie("Token")
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Invalid token. Please try again.",
 		})

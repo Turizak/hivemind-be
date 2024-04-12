@@ -3,6 +3,7 @@ package token
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -41,7 +42,8 @@ func CreateToken(username string, uuid string) (string, error) {
 // VerifyToken verifies the validity of a JWT token.
 // It takes a token string as input and returns an error if the token is invalid.
 func VerifyToken(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	authToken := strings.Split(tokenString, " ")[1]
+	token, err := jwt.Parse(authToken, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 
@@ -57,7 +59,8 @@ func VerifyToken(tokenString string) error {
 }
 
 func ParseToken(tokenString string) (*UserClaim, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &UserClaim{}, func(token *jwt.Token) (interface{}, error) {
+	authToken := strings.Split(tokenString, " ")[1]
+	token, err := jwt.ParseWithClaims(authToken, &UserClaim{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 

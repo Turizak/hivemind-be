@@ -33,24 +33,20 @@ type Hive struct {
 func CreateHive(c *gin.Context) {
 	var hive Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
-
-	claims, err := token.ParseToken(tokenString)
+	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
@@ -86,17 +82,14 @@ func CreateHive(c *gin.Context) {
 
 func GetHive(c *gin.Context) {
 	var hive []Hive
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -115,17 +108,14 @@ func GetHive(c *gin.Context) {
 func BanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -157,17 +147,14 @@ func BanHiveByUuid(c *gin.Context) {
 func UnBanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -199,17 +186,14 @@ func UnBanHiveByUuid(c *gin.Context) {
 func ArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -241,17 +225,14 @@ func ArchiveHiveByUuid(c *gin.Context) {
 func UnArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -284,17 +265,14 @@ func UpdateHiveByUuid(c *gin.Context) {
 	var hive Hive
 	var updateHive Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
