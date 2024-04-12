@@ -3,6 +3,7 @@ package hive
 import (
 	"example/hivemind-be/db"
 	"example/hivemind-be/token"
+	"example/hivemind-be/utils"
 	"fmt"
 	"net/http"
 	"time"
@@ -34,18 +35,7 @@ func CreateHive(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -83,18 +73,7 @@ func CreateHive(c *gin.Context) {
 func GetHive(c *gin.Context) {
 	var hive []Hive
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	if result := db.Db.Order("id asc").Find(&hive); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -109,18 +88,7 @@ func BanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -148,18 +116,7 @@ func UnBanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -187,18 +144,7 @@ func ArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -226,18 +172,7 @@ func UnArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -266,18 +201,7 @@ func UpdateHiveByUuid(c *gin.Context) {
 	var updateHive Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	if err := c.BindJSON(&updateHive); err != nil {
 		return
@@ -292,21 +216,12 @@ func UpdateHiveByUuid(c *gin.Context) {
 		return
 	}
 
-	if val, ok := jsonDataHasKey(updateHive, "description"); ok {
-		hive.Description = val
+	if val, ok := utils.JsonDataHasKey(updateHive, "Description"); ok {
+		hive.Description, _ = val.(string)
 	}
 
 	hive.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 
 	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, hive)
-}
-
-func jsonDataHasKey(data Hive, key string) (string, bool) {
-	switch key {
-	case "description":
-		return data.Description, true
-	default:
-		return "null", false
-	}
 }
