@@ -31,6 +31,14 @@ type Hive struct {
 	LastEdited     pq.NullTime `json:"LastEdited"`
 }
 
+// CreateHive creates a new hive based on the provided JSON data in the request body.
+// It requires a valid authorization token in the "Authorization" header.
+// The function parses the token and retrieves the claims, which include the username and account UUID.
+// The function then binds the JSON data to the `hive` variable.
+// It sets the creator, UUID, account UUID, member count, upvotes, downvotes, comments, archived, banned,
+// created time, and last edited time for the hive.
+// If there is an error during the creation process, it returns an error response with the corresponding status code.
+// Otherwise, it returns a success response with the created hive.
 func CreateHive(c *gin.Context) {
 	var hive Hive
 
