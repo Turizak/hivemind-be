@@ -44,17 +44,14 @@ type ContentVote struct {
 func GetContent(c *gin.Context) {
 	var content []Content
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -73,17 +70,14 @@ func GetContent(c *gin.Context) {
 func GetContentById(c *gin.Context) {
 	var content Content
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -103,17 +97,14 @@ func GetContentById(c *gin.Context) {
 func GetContentByUuid(c *gin.Context) {
 	var content Content
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -133,17 +124,14 @@ func GetContentByUuid(c *gin.Context) {
 func GetContentByHiveUuid(c *gin.Context) {
 	var content []Content
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -164,24 +152,20 @@ func CreateContent(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
-
-	claims, err := token.ParseToken(tokenString)
+	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
@@ -228,24 +212,20 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 	var hive hive.Hive
 	var contentVote ContentVote
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
-
-	claims, err := token.ParseToken(tokenString)
+	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
@@ -324,24 +304,20 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var hive hive.Hive
 	var contentVote ContentVote
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
-
-	claims, err := token.ParseToken(tokenString)
+	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
@@ -406,24 +382,20 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 	var hive hive.Hive
 	var contentVote ContentVote
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
-
-	claims, err := token.ParseToken(tokenString)
+	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
@@ -502,24 +474,20 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var hive hive.Hive
 	var contentVote ContentVote
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
+		})
+		return
+	}
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
-
-	claims, err := token.ParseToken(tokenString)
+	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
@@ -583,17 +551,14 @@ func DeleteContentByUuid(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -633,17 +598,14 @@ func UndeleteContentByUuid(c *gin.Context) {
 	var content Content
 	var hive hive.Hive
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
@@ -683,17 +645,14 @@ func UpdateContentByUuid(c *gin.Context) {
 	var content Content
 	var updateContent Content
 
-	cookie, err := c.Request.Cookie("Token")
-
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
+	authToken := c.GetHeader("Authorization")
+	if authToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "No token found in request.",
 		})
 		return
 	}
-
-	tokenString := cookie.Value
-	if err := token.VerifyToken(tokenString); err != nil {
+	if err := token.VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
