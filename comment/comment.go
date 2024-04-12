@@ -5,6 +5,7 @@ import (
 	"example/hivemind-be/db"
 	"example/hivemind-be/hive"
 	"example/hivemind-be/token"
+	"example/hivemind-be/utils"
 	"net/http"
 	"time"
 
@@ -48,18 +49,7 @@ func CreateComment(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -119,18 +109,7 @@ func CreateCommentReply(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -203,18 +182,7 @@ func GetCommentsByContentUuid(c *gin.Context) {
 	var comment []Comment
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -232,18 +200,7 @@ func GetCommentByUuid(c *gin.Context) {
 	var comment Comment
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -262,18 +219,7 @@ func GetCommentByUuidWithReplies(c *gin.Context) {
 	var replies []Comment
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -305,18 +251,7 @@ func DeleteCommentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -362,18 +297,7 @@ func UndeleteCommentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -418,18 +342,7 @@ func UpdateCommentByUuid(c *gin.Context) {
 	var updateComment Comment
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	if err := c.BindJSON(&updateComment); err != nil {
 		return
@@ -444,8 +357,8 @@ func UpdateCommentByUuid(c *gin.Context) {
 		return
 	}
 
-	if val, ok := jsonDataHasKey(updateComment, "message"); ok {
-		comment.Message = val
+	if val, ok := utils.JsonDataHasKey(updateComment, "Message"); ok {
+		comment.Message, _ = val.(string)
 	}
 
 	comment.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
@@ -459,18 +372,7 @@ func AddCommentUpvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -538,18 +440,7 @@ func RemoveCommentUpvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -605,18 +496,7 @@ func AddCommentDownvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -684,18 +564,7 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -744,13 +613,4 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "User downvote removed sucessfully!",
 	})
-}
-
-func jsonDataHasKey(data Comment, key string) (string, bool) {
-	switch key {
-	case "message":
-		return data.Message, true
-	default:
-		return "null", false
-	}
 }

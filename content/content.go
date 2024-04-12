@@ -4,6 +4,7 @@ import (
 	"example/hivemind-be/db"
 	"example/hivemind-be/hive"
 	"example/hivemind-be/token"
+	"example/hivemind-be/utils"
 	"net/http"
 	"time"
 
@@ -45,18 +46,7 @@ func GetContent(c *gin.Context) {
 	var content []Content
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	if result := db.Db.Order("id asc").Find(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -71,18 +61,7 @@ func GetContentById(c *gin.Context) {
 	var content Content
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	id := c.Param("id")
 	if result := db.Db.First(&content, id); result.Error != nil {
@@ -98,18 +77,7 @@ func GetContentByUuid(c *gin.Context) {
 	var content Content
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -125,18 +93,7 @@ func GetContentByHiveUuid(c *gin.Context) {
 	var content []Content
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("hive_uuid = ?", uuid).Find(&content); result.Error != nil {
@@ -153,18 +110,7 @@ func CreateContent(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -213,18 +159,7 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -305,18 +240,7 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -383,18 +307,7 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -475,18 +388,7 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -552,18 +454,7 @@ func DeleteContentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -599,18 +490,7 @@ func UndeleteContentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	uuid := c.Param("uuid")
 
@@ -646,18 +526,7 @@ func UpdateContentByUuid(c *gin.Context) {
 	var updateContent Content
 
 	authToken := c.GetHeader("Authorization")
-	if authToken == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "No token found in request.",
-		})
-		return
-	}
-	if err := token.VerifyToken(authToken); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
-		return
-	}
+	token.CheckToken(c, authToken)
 
 	if err := c.BindJSON(&updateContent); err != nil {
 		return
@@ -671,37 +540,21 @@ func UpdateContentByUuid(c *gin.Context) {
 		})
 		return
 	}
-
-	if val, ok := jsonDataHasKey(updateContent, "title"); ok {
-		content.Title = val
+	if val, ok := utils.JsonDataHasKey(updateContent, "Title"); ok {
+		content.Title, _ = val.(string)
 	}
-	if val, ok := jsonDataHasKey(updateContent, "message"); ok {
-		content.Message = val
+	if val, ok := utils.JsonDataHasKey(updateContent, "Message"); ok {
+		content.Message, _ = val.(string)
 	}
-	if val, ok := jsonDataHasKey(updateContent, "link"); ok {
-		content.Link = val
+	if val, ok := utils.JsonDataHasKey(updateContent, "Link"); ok {
+		content.Link, _ = val.(string)
 	}
-	if val, ok := jsonDataHasKey(updateContent, "imageLink"); ok {
-		content.ImageLink = val
+	if val, ok := utils.JsonDataHasKey(updateContent, "ImageLink"); ok {
+		content.ImageLink, _ = val.(string)
 	}
 
 	content.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 
 	db.Db.Save(&content)
 	c.JSON(http.StatusOK, content)
-}
-
-func jsonDataHasKey(data Content, key string) (string, bool) {
-	switch key {
-	case "title":
-		return data.Title, true
-	case "message":
-		return data.Message, true
-	case "link":
-		return data.Link, true
-	case "imageLink":
-		return data.ImageLink, true
-	default:
-		return "null", false
-	}
 }
