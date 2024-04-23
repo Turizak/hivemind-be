@@ -186,7 +186,7 @@ func GetCommentsByContentUuid(c *gin.Context) {
 
 	uuid := c.Param("uuid")
 
-	if result := db.Db.Where("content_uuid = ?", uuid).Find(&comment); result.Error != nil {
+	if result := db.Db.Where("content_uuid = ?", uuid).Order("created DESC").Find(&comment); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
 		})
