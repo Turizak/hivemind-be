@@ -1,4 +1,7 @@
 # hivemind-be
+
+[![Fly Deploy](https://github.com/rakazirut/hivemind-be/actions/workflows/fly.yml/badge.svg)](https://github.com/rakazirut/hivemind-be/actions/workflows/fly.yml)
+
 Hivemind Backend Repo
 
 Docker:
