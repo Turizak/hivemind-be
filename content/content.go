@@ -46,7 +46,11 @@ func GetContent(c *gin.Context) {
 	var content []Content
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	if result := db.Db.Order("id asc").Find(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -61,7 +65,11 @@ func GetContentById(c *gin.Context) {
 	var content Content
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	id := c.Param("id")
 	if result := db.Db.First(&content, id); result.Error != nil {
@@ -77,7 +85,11 @@ func GetContentByUuid(c *gin.Context) {
 	var content Content
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -93,7 +105,11 @@ func GetContentByHiveUuid(c *gin.Context) {
 	var content []Content
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("hive_uuid = ?", uuid).Find(&content); result.Error != nil {
@@ -110,7 +126,11 @@ func CreateContent(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -159,7 +179,11 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -240,7 +264,11 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -307,7 +335,11 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -388,7 +420,11 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -454,7 +490,11 @@ func DeleteContentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -490,7 +530,11 @@ func UndeleteContentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -526,7 +570,11 @@ func UpdateContentByUuid(c *gin.Context) {
 	var updateContent Content
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	if err := c.BindJSON(&updateContent); err != nil {
 		return

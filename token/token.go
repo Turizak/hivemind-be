@@ -78,17 +78,18 @@ func ParseToken(tokenString string) (*UserClaim, error) {
 	return claims, nil
 }
 
-func CheckToken(c *gin.Context, authToken string) {
+func CheckToken(c *gin.Context, authToken string) bool {
 	if authToken == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "No token found in request.",
 		})
-		return
+		return false
 	}
 	if err := VerifyToken(authToken); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"Error": "Unauthorized.",
 		})
-		return
+		return false
 	}
+	return true
 }
