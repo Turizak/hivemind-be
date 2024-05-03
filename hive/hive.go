@@ -43,7 +43,11 @@ func CreateHive(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -81,7 +85,11 @@ func CreateHive(c *gin.Context) {
 func GetHive(c *gin.Context) {
 	var hive []Hive
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	if result := db.Db.Order("id asc").Find(&hive); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -96,7 +104,11 @@ func BanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -124,7 +136,11 @@ func UnBanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -152,7 +168,11 @@ func ArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -180,7 +200,11 @@ func UnArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 	if result := db.Db.Where("uuid = ?", uuid).First(&hive); result.Error != nil {
@@ -209,7 +233,11 @@ func UpdateHiveByUuid(c *gin.Context) {
 	var updateHive Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	if err := c.BindJSON(&updateHive); err != nil {
 		return

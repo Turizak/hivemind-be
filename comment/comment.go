@@ -49,7 +49,11 @@ func CreateComment(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -109,7 +113,11 @@ func CreateCommentReply(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -182,7 +190,12 @@ func GetCommentsByContentUuid(c *gin.Context) {
 	var comment []Comment
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -207,7 +220,11 @@ func GetCommentByUuid(c *gin.Context) {
 	var comment Comment
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -230,7 +247,11 @@ func GetCommentByUuidWithReplies(c *gin.Context) {
 	var replies []Comment
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -273,7 +294,11 @@ func DeleteCommentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -319,7 +344,11 @@ func UndeleteCommentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	uuid := c.Param("uuid")
 
@@ -364,7 +393,11 @@ func UpdateCommentByUuid(c *gin.Context) {
 	var updateComment Comment
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	if err := c.BindJSON(&updateComment); err != nil {
 		return
@@ -394,7 +427,11 @@ func AddCommentUpvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -462,7 +499,11 @@ func RemoveCommentUpvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -518,7 +559,11 @@ func AddCommentDownvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -586,7 +631,11 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 	claims, err := token.ParseToken(authToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{

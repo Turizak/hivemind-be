@@ -124,7 +124,11 @@ func AccountLogin(c *gin.Context) {
 
 func ValidateAccountToken(c *gin.Context) {
 	authToken := c.GetHeader("Authorization")
-	token.CheckToken(c, authToken)
+	validToken := token.CheckToken(c, authToken)
+
+	if !validToken {
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "Token is valid.",
