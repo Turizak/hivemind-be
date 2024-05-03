@@ -193,6 +193,13 @@ func GetCommentsByContentUuid(c *gin.Context) {
 		return
 	}
 
+	for i := 0; i < len(comment); i++ {
+		if comment[i].Deleted {
+			comment[i].Message = "This comment has been deleted."
+		}
+
+	}
+
 	c.JSON(http.StatusOK, comment)
 }
 
@@ -209,6 +216,10 @@ func GetCommentByUuid(c *gin.Context) {
 			"Error": result.Error.Error(),
 		})
 		return
+	}
+
+	if comment.Deleted {
+		comment.Message = "This comment has been deleted."
 	}
 
 	c.JSON(http.StatusOK, comment)
@@ -240,6 +251,17 @@ func GetCommentByUuidWithReplies(c *gin.Context) {
 	commentWithReplies := CommentWithReplies{
 		Parent:  comment,
 		Replies: replies,
+	}
+
+	if comment.Deleted {
+		comment.Message = "This comment has been deleted."
+	}
+
+	for i := 0; i < len(replies); i++ {
+		if replies[i].Deleted {
+			replies[i].Message = "This comment has been deleted."
+		}
+
 	}
 
 	c.JSON(http.StatusOK, commentWithReplies)
