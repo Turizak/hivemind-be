@@ -32,14 +32,6 @@ type Hive struct {
 	LastEdited     pq.NullTime `json:"LastEdited"`
 }
 
-// CreateHive creates a new hive based on the provided JSON data in the request body.
-// It requires a valid authorization token in the "Authorization" header.
-// The function parses the token and retrieves the claims, which include the username and account UUID.
-// The function then binds the JSON data to the `hive` variable.
-// It sets the creator, UUID, account UUID, member count, upvotes, downvotes, comments, archived, banned,
-// created time, and last edited time for the hive.
-// If there is an error during the creation process, it returns an error response with the corresponding status code.
-// Otherwise, it returns a success response with the created hive.
 func CreateHive(c *gin.Context) {
 	var hive Hive
 
@@ -61,18 +53,18 @@ func CreateHive(c *gin.Context) {
 		return
 	}
 
-	pattern := "^[a-zA-Z]{1,30}$"
-	regex, err := regexp.Compile(pattern)
-	if err != nil {
+	// Validate hive name
+	if !validateHiveName(hive.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Unknown error occurred. Please try again.",
+			"Error": "Hive name should be between 1 and 30 characters long and contain only alphabetic characters.",
 		})
 		return
 	}
-	// Check if the test string matches the pattern
-	if !regex.MatchString(hive.Name) {
+
+	// Validate hive description
+	if !validateHiveDescription(hive.Description) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Hive name should be between 1 and 30 characters long and contain only letters.",
+			"Error": "Hive description should be between 1 and 256 characters long.",
 		})
 		return
 	}
@@ -273,8 +265,43 @@ func UpdateHiveByUuid(c *gin.Context) {
 		hive.Description, _ = val.(string)
 	}
 
+	// Validate hive description
+	if !validateHiveDescription(hive.Description) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Hive description should be between 1 and 256 characters long.",
+		})
+		return
+	}
+
 	hive.LastEdited = pq.NullTime{Time: time.Now(), Valid: true}
 
 	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, hive)
+}
+
+// validateHiveName validates the given hive name against a specific pattern.
+// It checks if the name consists of only alphabetic characters and has a length between 1 and 30.
+// Returns true if the name is valid, otherwise false.
+func validateHiveName(name string) bool {
+	namePattern := "^[a-zA-Z]{1,30}$"
+	nameRegex, err := regexp.Compile(namePattern)
+	if err != nil {
+		return false
+	}
+	// Check if the test string matches the pattern
+	if !nameRegex.MatchString(name) {
+		return false
+	}
+	return true
+}
+
+// validateHiveDescription validates the given description string against a pattern.
+// The description must be between 1 and 256 characters long.
+// It returns true if the description is valid, otherwise false.
+func validateHiveDescription(description string) bool {
+	if len(description) >= 1 && len(description) <= 256 {
+		return true
+	} else {
+		return false
+	}
 }

@@ -68,6 +68,13 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
+	if !validateCommentMessage(newComment.Message) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Message must be between 1 and 2048 characters.",
+		})
+		return
+	}
+
 	if result := db.Db.Where("uuid = ?", uid).First(&content); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": result.Error.Error(),
@@ -130,6 +137,13 @@ func CreateCommentReply(c *gin.Context) {
 	pid := c.Param("parentuuid")
 
 	if err := c.BindJSON(&newComment); err != nil {
+		return
+	}
+
+	if !validateCommentMessage(newComment.Message) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Message must be between 1 and 2048 characters.",
+		})
 		return
 	}
 
@@ -400,6 +414,13 @@ func UpdateCommentByUuid(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&updateComment); err != nil {
+		return
+	}
+
+	if !validateCommentMessage(updateComment.Message) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Message must be between 1 and 2048 characters.",
+		})
 		return
 	}
 
@@ -684,4 +705,12 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "User downvote removed sucessfully!",
 	})
+}
+
+func validateCommentMessage(message string) bool {
+	if len(message) >= 1 && len(message) <= 2048 {
+		return true
+	} else {
+		return false
+	}
 }
