@@ -3,7 +3,6 @@ package content
 import (
 	"example/hivemind-be/db"
 	"example/hivemind-be/hive"
-	"example/hivemind-be/token"
 	"example/hivemind-be/utils"
 	"net/http"
 	"time"
@@ -46,8 +45,7 @@ func GetContent(c *gin.Context) {
 	var content []Content
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -65,8 +63,7 @@ func GetContentById(c *gin.Context) {
 	var content Content
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -85,8 +82,7 @@ func GetContentByUuid(c *gin.Context) {
 	var content Content
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -105,8 +101,7 @@ func GetContentByHiveUuid(c *gin.Context) {
 	var content []Content
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -126,16 +121,8 @@ func CreateContent(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -143,14 +130,14 @@ func CreateContent(c *gin.Context) {
 		return
 	}
 
-	if !validateContentTitle(content.Title) {
+	if !utils.ValidateContentTitle(content.Title) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Title must be between 1 and 256 characters.",
 		})
 		return
 	}
 
-	if !validateContentMessage(content.Message) {
+	if !utils.ValidateContentMessage(content.Message) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Message must be between 1 and 5000 characters.",
 		})
@@ -193,16 +180,8 @@ func AddContentUpvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -278,16 +257,8 @@ func RemoveContentUpvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -349,16 +320,8 @@ func AddContentDownvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -434,16 +397,8 @@ func RemoveContentDownvoteByUuid(c *gin.Context) {
 	var contentVote ContentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -504,8 +459,7 @@ func DeleteContentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -544,8 +498,7 @@ func UndeleteContentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -584,8 +537,7 @@ func UpdateContentByUuid(c *gin.Context) {
 	var updateContent Content
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -594,14 +546,14 @@ func UpdateContentByUuid(c *gin.Context) {
 		return
 	}
 
-	if !validateContentTitle(updateContent.Title) {
+	if !utils.ValidateContentTitle(updateContent.Title) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Title must be between 1 and 256 characters.",
 		})
 		return
 	}
 
-	if !validateContentMessage(updateContent.Message) {
+	if !utils.ValidateContentMessage(updateContent.Message) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Message must be between 1 and 5000 characters.",
 		})
@@ -633,20 +585,4 @@ func UpdateContentByUuid(c *gin.Context) {
 
 	db.Db.Save(&content)
 	c.JSON(http.StatusOK, content)
-}
-
-func validateContentTitle(title string) bool {
-	if len(title) >= 1 && len(title) <= 256 {
-		return true
-	} else {
-		return false
-	}
-}
-
-func validateContentMessage(message string) bool {
-	if len(message) >= 1 && len(message) <= 5000 {
-		return true
-	} else {
-		return false
-	}
 }

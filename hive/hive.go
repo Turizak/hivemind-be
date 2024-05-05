@@ -2,11 +2,9 @@ package hive
 
 import (
 	"example/hivemind-be/db"
-	"example/hivemind-be/token"
 	"example/hivemind-be/utils"
 	"fmt"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,16 +34,8 @@ func CreateHive(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -54,7 +44,7 @@ func CreateHive(c *gin.Context) {
 	}
 
 	// Validate hive name
-	if !validateHiveName(hive.Name) {
+	if !utils.ValidateHiveName(hive.Name) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Hive name should be between 1 and 30 characters long and contain only alphabetic characters.",
 		})
@@ -62,7 +52,7 @@ func CreateHive(c *gin.Context) {
 	}
 
 	// Validate hive description
-	if !validateHiveDescription(hive.Description) {
+	if !utils.ValidateHiveDescription(hive.Description) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Hive description should be between 1 and 256 characters long.",
 		})
@@ -94,8 +84,7 @@ func CreateHive(c *gin.Context) {
 func GetHive(c *gin.Context) {
 	var hive []Hive
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -113,8 +102,7 @@ func BanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -145,8 +133,7 @@ func UnBanHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -177,8 +164,7 @@ func ArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -209,8 +195,7 @@ func UnArchiveHiveByUuid(c *gin.Context) {
 	var hive Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -242,8 +227,7 @@ func UpdateHiveByUuid(c *gin.Context) {
 	var updateHive Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -266,7 +250,7 @@ func UpdateHiveByUuid(c *gin.Context) {
 	}
 
 	// Validate hive description
-	if !validateHiveDescription(hive.Description) {
+	if !utils.ValidateHiveDescription(hive.Description) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Hive description should be between 1 and 256 characters long.",
 		})
@@ -277,31 +261,4 @@ func UpdateHiveByUuid(c *gin.Context) {
 
 	db.Db.Save(&hive)
 	c.JSON(http.StatusOK, hive)
-}
-
-// validateHiveName validates the given hive name against a specific pattern.
-// It checks if the name consists of only alphabetic characters and has a length between 1 and 30.
-// Returns true if the name is valid, otherwise false.
-func validateHiveName(name string) bool {
-	namePattern := "^[a-zA-Z]{1,30}$"
-	nameRegex, err := regexp.Compile(namePattern)
-	if err != nil {
-		return false
-	}
-	// Check if the test string matches the pattern
-	if !nameRegex.MatchString(name) {
-		return false
-	}
-	return true
-}
-
-// validateHiveDescription validates the given description string against a pattern.
-// The description must be between 1 and 256 characters long.
-// It returns true if the description is valid, otherwise false.
-func validateHiveDescription(description string) bool {
-	if len(description) >= 1 && len(description) <= 256 {
-		return true
-	} else {
-		return false
-	}
 }

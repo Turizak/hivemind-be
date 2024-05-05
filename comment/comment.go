@@ -4,7 +4,6 @@ import (
 	"example/hivemind-be/content"
 	"example/hivemind-be/db"
 	"example/hivemind-be/hive"
-	"example/hivemind-be/token"
 	"example/hivemind-be/utils"
 	"net/http"
 	"time"
@@ -49,16 +48,8 @@ func CreateComment(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -68,7 +59,7 @@ func CreateComment(c *gin.Context) {
 		return
 	}
 
-	if !validateCommentMessage(newComment.Message) {
+	if !utils.ValidateCommentMessage(newComment.Message) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Message must be between 1 and 2048 characters.",
 		})
@@ -120,16 +111,8 @@ func CreateCommentReply(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -140,7 +123,7 @@ func CreateCommentReply(c *gin.Context) {
 		return
 	}
 
-	if !validateCommentMessage(newComment.Message) {
+	if !utils.ValidateCommentMessage(newComment.Message) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Message must be between 1 and 2048 characters.",
 		})
@@ -205,8 +188,7 @@ func GetCommentsByContentUuid(c *gin.Context) {
 
 	authToken := c.GetHeader("Authorization")
 
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -234,8 +216,7 @@ func GetCommentByUuid(c *gin.Context) {
 	var comment Comment
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -261,8 +242,7 @@ func GetCommentByUuidWithReplies(c *gin.Context) {
 	var replies []Comment
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -308,8 +288,7 @@ func DeleteCommentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -358,8 +337,7 @@ func UndeleteCommentByUuid(c *gin.Context) {
 	var hive hive.Hive
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -407,8 +385,7 @@ func UpdateCommentByUuid(c *gin.Context) {
 	var updateComment Comment
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	_, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
 		return
 	}
@@ -417,7 +394,7 @@ func UpdateCommentByUuid(c *gin.Context) {
 		return
 	}
 
-	if !validateCommentMessage(updateComment.Message) {
+	if !utils.ValidateCommentMessage(updateComment.Message) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Message must be between 1 and 2048 characters.",
 		})
@@ -448,16 +425,8 @@ func AddCommentUpvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -520,16 +489,8 @@ func RemoveCommentUpvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -580,16 +541,8 @@ func AddCommentDownvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -652,16 +605,8 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	var commentVote CommentVote
 
 	authToken := c.GetHeader("Authorization")
-	validToken := token.CheckToken(c, authToken)
-
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
 	if !validToken {
-		return
-	}
-	claims, err := token.ParseToken(authToken)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return
 	}
 
@@ -705,12 +650,4 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "User downvote removed sucessfully!",
 	})
-}
-
-func validateCommentMessage(message string) bool {
-	if len(message) >= 1 && len(message) <= 2048 {
-		return true
-	} else {
-		return false
-	}
 }
