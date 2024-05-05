@@ -6,6 +6,7 @@ import (
 	"example/hivemind-be/utils"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -57,6 +58,22 @@ func CreateHive(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&hive); err != nil {
+		return
+	}
+
+	pattern := "^[a-zA-Z]{1,30}$"
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Unknown error occurred. Please try again.",
+		})
+		return
+	}
+	// Check if the test string matches the pattern
+	if !regex.MatchString(hive.Name) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Hive name should be between 1 and 30 characters long and contain only letters.",
+		})
 		return
 	}
 
