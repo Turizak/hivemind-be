@@ -143,6 +143,20 @@ func CreateContent(c *gin.Context) {
 		return
 	}
 
+	if !validateContentTitle(content.Title) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Title must be between 1 and 256 characters.",
+		})
+		return
+	}
+
+	if !validateContentMessage(content.Message) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Message must be between 1 and 5000 characters.",
+		})
+		return
+	}
+
 	if result := db.Db.Where("name = ?", content.Hive).First(&hive); result.Error != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{
 			"Error": "Hive not found! Please use an existing hive or create a new hive first.",
@@ -580,6 +594,20 @@ func UpdateContentByUuid(c *gin.Context) {
 		return
 	}
 
+	if !validateContentTitle(updateContent.Title) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Title must be between 1 and 256 characters.",
+		})
+		return
+	}
+
+	if !validateContentMessage(updateContent.Message) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Message must be between 1 and 5000 characters.",
+		})
+		return
+	}
+
 	uuid := c.Param("uuid")
 
 	if result := db.Db.Where("uuid = ?", uuid).First(&content); result.Error != nil {
@@ -605,4 +633,20 @@ func UpdateContentByUuid(c *gin.Context) {
 
 	db.Db.Save(&content)
 	c.JSON(http.StatusOK, content)
+}
+
+func validateContentTitle(title string) bool {
+	if len(title) >= 1 && len(title) <= 256 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func validateContentMessage(message string) bool {
+	if len(message) >= 1 && len(message) <= 5000 {
+		return true
+	} else {
+		return false
+	}
 }
