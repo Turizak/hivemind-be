@@ -49,7 +49,15 @@ func CreateAccount(c *gin.Context) {
 	addr, err := mail.ParseAddress(strings.ToLower(acc.Email))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Error: Email address format is not valid. Please us a valid email address.",
+			"Error": "Email address format is not valid. Please us a valid email address.",
+		})
+		return
+	}
+
+	validPass := utils.ValidatePasswordComplexity(acc.Password)
+	if !validPass {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Password does not meet complexity requirements. Please use a password with at least 12 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
 		})
 		return
 	}
@@ -97,7 +105,7 @@ func AccountLogin(c *gin.Context) {
 
 	if !utils.DoPasswordsMatch(account.Password, acc.Password) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"Error": "Password is incorrect. Please try again.",
+			"Error": "Login unsuccessful. Please try again.",
 		})
 		return
 	}
@@ -166,6 +174,14 @@ func ChangePassword(c *gin.Context) {
 		return
 	}
 
+	validPass := utils.ValidatePasswordComplexity(changePassword.New)
+	if !validPass {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "New Password does not meet complexity requirements. Please use a password with at least 12 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
+		})
+		return
+	}
+
 	var account Account
 	if result := db.Db.Where("uuid = ?", claims.AccountUUID).First(&account); result.Error != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -177,6 +193,13 @@ func ChangePassword(c *gin.Context) {
 	if !utils.DoPasswordsMatch(account.Password, changePassword.Old) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"Error": "Old password is incorrect. Please try again.",
+		})
+		return
+	}
+
+	if utils.DoPasswordsMatch(account.Password, changePassword.New) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "New password cannot match old password. Please try again.",
 		})
 		return
 	}
