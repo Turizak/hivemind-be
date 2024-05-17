@@ -34,6 +34,11 @@ type ResponseAccount struct {
 	Created  pq.NullTime `json:"Created"`
 }
 
+type UpdatePassword struct {
+	Old string `json:"Old"`
+	New string `json:"New"`
+}
+
 func CreateAccount(c *gin.Context) {
 	var acc Account
 
@@ -147,4 +152,53 @@ func GetAccount(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, responseAccount)
+}
+
+func ChangePassword(c *gin.Context) {
+	authToken := c.GetHeader("Authorization")
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
+	if !validToken {
+		return
+	}
+
+	var changePassword UpdatePassword
+	if err := c.BindJSON(&changePassword); err != nil {
+		return
+	}
+
+	var account Account
+	if result := db.Db.Where("uuid = ?", claims.AccountUUID).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Account not found. Please try again.",
+		})
+		return
+	}
+
+	if !utils.DoPasswordsMatch(account.Password, changePassword.Old) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Old password is incorrect. Please try again.",
+		})
+		return
+	}
+
+	hashedPassword, err := utils.HashPassword(changePassword.New)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Error: A error occurred creating the account. Please try again.",
+		})
+		return
+	}
+
+	account.Password = hashedPassword
+
+	if result := db.Db.Save(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Could not update account. Please try again.",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"Message": "Password successfully updated.",
+	})
 }
