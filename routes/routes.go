@@ -53,4 +53,5 @@ func Routes(router *gin.Engine) {
 	router.POST("/account/create", account.CreateAccount)
 	router.POST("/account/login", account.AccountLogin)
 	router.GET("/account/token/validate", account.ValidateAccountToken)
+	router.GET("/account", account.GetAccount)
 }

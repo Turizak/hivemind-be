@@ -25,6 +25,15 @@ type Account struct {
 	Created  pq.NullTime `json:"Created"`
 }
 
+type ResponseAccount struct {
+	Username string      `json:"Username"`
+	Email    string      `json:"Email"`
+	UUID     string      `json:"Uuid"`
+	Deleted  bool        `json:"Deleted"`
+	Banned   bool        `json:"Banned"`
+	Created  pq.NullTime `json:"Created"`
+}
+
 func CreateAccount(c *gin.Context) {
 	var acc Account
 
@@ -111,4 +120,31 @@ func ValidateAccountToken(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "Token is valid.",
 	})
+}
+
+func GetAccount(c *gin.Context) {
+	authToken := c.GetHeader("Authorization")
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
+	if !validToken {
+		return
+	}
+
+	var account Account
+	if result := db.Db.Where("uuid = ?", claims.AccountUUID).First(&account); result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"Error": "Account not found. Please try again.",
+		})
+		return
+	}
+
+	var responseAccount = ResponseAccount{
+		Username: account.Username,
+		Email:    account.Email,
+		UUID:     account.UUID,
+		Deleted:  account.Deleted,
+		Banned:   account.Banned,
+		Created:  account.Created,
+	}
+
+	c.JSON(http.StatusOK, responseAccount)
 }
