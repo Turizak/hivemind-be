@@ -38,15 +38,9 @@ func ValidateAuthentication(c *gin.Context, authToken string) (*token.UserClaim,
 	expire := token.CheckTokenNotExpired(c, authToken)
 
 	if !validToken {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Unauthorized.",
-		})
 		return nil, false
 	}
 	if !expire {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"Error": "Token has expired.",
-		})
 		return nil, false
 	}
 	claims, err := token.ParseToken(authToken)
