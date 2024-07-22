@@ -41,6 +41,11 @@ type ContentVote struct {
 	LastEdited  pq.NullTime
 }
 
+type VoteResults struct {
+	Upvotes   []string `json:"Upvotes"`
+	Downvotes []string `json:"Downvotes"`
+}
+
 func GetContent(c *gin.Context) {
 	var content []Content
 
@@ -585,4 +590,28 @@ func UpdateContentByUuid(c *gin.Context) {
 
 	db.Db.Save(&content)
 	c.JSON(http.StatusOK, content)
+}
+
+func GetContentVotesByAccount(c *gin.Context) {
+	var contentVotes []ContentVote
+
+	authToken := c.GetHeader("Authorization")
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
+	if !validToken {
+		return
+	}
+
+	db.Db.Where("account_uuid = ?", claims.AccountUUID).Find(&contentVotes)
+
+	var result VoteResults
+	for _, item := range contentVotes {
+		if item.Upvote {
+			result.Upvotes = append(result.Upvotes, item.ContentUUID)
+		}
+		if item.Downvote {
+			result.Downvotes = append(result.Downvotes, item.ContentUUID)
+		}
+	}
+
+	c.JSON(http.StatusOK, &result)
 }
