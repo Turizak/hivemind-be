@@ -14,6 +14,7 @@ func Routes(router *gin.Engine) {
 	router.GET("/content", content.GetContent)
 	router.GET("/content/id/:id", content.GetContentById)
 	router.GET("/content/uuid/:uuid", content.GetContentByUuid)
+	router.GET("/content/votes", content.GetContentVotesByAccount)
 	router.POST("/content", content.CreateContent)
 	router.PATCH("/content/uuid/:uuid/add-upvote", content.AddContentUpvoteByUuid)
 	router.PATCH("/content/uuid/:uuid/remove-upvote", content.RemoveContentUpvoteByUuid)
