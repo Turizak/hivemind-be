@@ -39,7 +39,7 @@ func CreateToken(username string, uuid string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{},
 		AccountUUID:      uuid,
 		Username:         username,
-		Exp:              time.Now().Add(time.Hour * 2).Unix(),
+		Exp:              time.Now().Add(time.Minute * 2).Unix(),
 	})
 
 	tokenString, err := token.SignedString(secretKey)
@@ -54,7 +54,7 @@ func CreateRefreshToken(username string, uuid string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{},
 		AccountUUID:      uuid,
 		Username:         username,
-		Exp:              time.Now().Add(time.Hour * 24).Unix(),
+		Exp:              time.Now().Add(time.Minute * 10).Unix(),
 	})
 
 	tokenString, err := token.SignedString(refreshSecretKey)
