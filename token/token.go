@@ -54,7 +54,7 @@ func CreateRefreshToken(username string, uuid string) (string, error) {
 		RegisteredClaims: jwt.RegisteredClaims{},
 		AccountUUID:      uuid,
 		Username:         username,
-		Exp:              time.Now().Add(time.Minute * 10).Unix(),
+		Exp:              time.Now().Add(time.Minute * 120).Unix(),
 	})
 
 	tokenString, err := token.SignedString(refreshSecretKey)
