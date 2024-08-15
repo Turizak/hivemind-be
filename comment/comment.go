@@ -44,7 +44,7 @@ type CommentVote struct {
 type ResponseData struct {
 	ContentUuid string   `json:"ContentUuid"`
 	Upvotes     []string `json:"Upvotes"`
-	DownVotes   []string `json:"DownVotes"`
+	DownVotes   []string `json:"Downvotes"`
 }
 
 type CommentVoteGroup struct {
