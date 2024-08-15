@@ -41,6 +41,18 @@ type CommentVote struct {
 	Downvote    bool
 	LastEdited  pq.NullTime
 }
+type ResponseData struct {
+	ContentUuid string   `json:"ContentUuid"`
+	Upvotes     []string `json:"Upvotes"`
+	DownVotes   []string `json:"Downvotes"`
+}
+
+type CommentVoteGroup struct {
+	Upvote      bool   `json:"upvote"`
+	Downvote    bool   `json:"downvote"`
+	CommentUuid string `json:"comment_uuid"`
+	ContentUuid string `json:"content_uuid"`
+}
 
 func CreateComment(c *gin.Context) {
 	var newComment Comment
@@ -650,4 +662,59 @@ func RemoveCommentDownvoteByUuid(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"Message": "User downvote removed sucessfully!",
 	})
+}
+
+func GetCommentVotesByAccount(c *gin.Context) {
+	authToken := c.GetHeader("Authorization")
+	claims, validToken := utils.ValidateAuthentication(c, authToken)
+	if !validToken {
+		return
+	}
+
+	var results []CommentVoteGroup
+	db.Db.Table("comment_votes AS v").
+		Select("DISTINCT v.upvote, v.downvote, v.comment_uuid, c.content_uuid").
+		Joins("LEFT JOIN comments AS c ON v.comment_uuid = c.uuid").
+		Where("v.account_uuid = ?", claims.AccountUUID).
+		Where("c.content_uuid IS NOT NULL").
+		Order("c.content_uuid").
+		Scan(&results)
+
+	if len(results) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No votes found for this account"})
+		return
+	}
+
+	// Process the results
+	resultMap := make(map[string]*ResponseData)
+
+	// Group the results by content_uuid
+	for _, data := range results {
+		if _, exists := resultMap[data.ContentUuid]; !exists {
+			resultMap[data.ContentUuid] = &ResponseData{
+				ContentUuid: data.ContentUuid,
+				Upvotes:     []string{},
+				DownVotes:   []string{},
+			}
+		}
+
+		//Only append if the vote is true
+		if data.Upvote {
+			resultMap[data.ContentUuid].Upvotes = append(resultMap[data.ContentUuid].Upvotes, data.CommentUuid)
+		}
+
+		//Only append if the vote is true
+		if data.Downvote {
+			resultMap[data.ContentUuid].DownVotes = append(resultMap[data.ContentUuid].DownVotes, data.CommentUuid)
+		}
+	}
+
+	// Convert map to slice
+	responseData := make([]ResponseData, 0, len(resultMap))
+	for _, data := range resultMap {
+		responseData = append(responseData, *data)
+	}
+
+	// Return the result as JSON
+	c.JSON(http.StatusOK, responseData)
 }
