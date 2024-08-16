@@ -707,6 +707,10 @@ func GetCommentVotesByAccount(c *gin.Context) {
 		if data.Downvote {
 			resultMap[data.ContentUuid].DownVotes = append(resultMap[data.ContentUuid].DownVotes, data.CommentUuid)
 		}
+		// Check if both arrays are empty and delete the key if they are
+		if len(resultMap[data.ContentUuid].Upvotes) == 0 && len(resultMap[data.ContentUuid].DownVotes) == 0 {
+			delete(resultMap, data.ContentUuid)
+		}
 	}
 
 	// Convert map to slice
