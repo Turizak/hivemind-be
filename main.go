@@ -3,6 +3,7 @@ package main
 import (
 	"example/hivemind-be/db"
 	"example/hivemind-be/routes"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -19,5 +20,5 @@ func main() {
 		MaxAge:       12 * time.Hour,
 	}))
 	routes.Routes(router)
-	router.Run(":8080")
+	router.Run(os.Getenv("PORT"))
 }
